@@ -1,61 +1,204 @@
+
+# ============================================================
+# LAB 11 - DEMORAS AJUSTADAS POR HORARIO
+# Manu | Pregunta 01: Comparación de puntualidad de aerolíneas
+# ============================================================
+
+from pathlib import Path
+
 import pandas as pd
 
 
 def pregunta_01() -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Una autoridad aeronáutica publica cada año un ranking de aerolíneas según
-    su tasa de demora, y algunas aerolíneas se quejan de que es injusto: las
-    demoras se acumulan a lo largo del día, de modo que una aerolínea con
-    muchos vuelos en la tarde y la noche parece peor aunque opere igual de
-    bien que las demás. Su tarea es construir un ranking que tenga en cuenta
-    la mezcla de horarios de cada aerolínea.
+    Analiza las demoras de las aerolíneas considerando
+    el efecto de los horarios programados de salida.
 
-    El archivo `data/flights_by_carrier_day_hour.csv.gz` tiene los vuelos
-    nacionales entre 2006 y 2008, agregados por año, mes, día de la semana,
-    hora programada de salida (`scheduled_departure_hour`) y aerolínea
-    (`reporting_airline`). Use las columnas `operated_flights` (vuelos
-    operados) y `delayed_departure_15_flights` (vuelos que salieron con 15
-    minutos o más de demora).
+    Calcula las tasas nacionales por hora, las demoras
+    esperadas por aerolínea y dos rankings de puntualidad.
 
-    Siga estos pasos:
-
-    1. Calcule la tasa nacional de demora de cada hora programada de salida:
-       vuelos demorados sobre vuelos operados, con todas las aerolíneas
-       juntas.
-    2. Para cada aerolínea, calcule las demoras esperadas: en cada hora,
-       multiplique sus vuelos operados por la tasa nacional de esa hora, y
-       sume sobre todas las horas. Son las demoras que tendría si en cada hora
-       se comportara como el promedio nacional.
-    3. Divida las demoras observadas entre las esperadas. Un valor mayor que 1
-       significa que la aerolínea se demora más de lo que explican sus
-       horarios.
-
-    Genere dos archivos en `submission/`, sin el índice de Pandas y con las
-    columnas en el orden indicado:
-
-    1. `hourly_delay_rates.csv`, con una fila por hora, de 0 a 23:
-       `scheduled_departure_hour`, `operated_flights`,
-       `delayed_departure_15_flights` y `delay_rate`.
-
-    2. `carrier_adjusted_delays.csv`, con una fila por aerolínea:
-       `reporting_airline`, `operated_flights`,
-       `delayed_departure_15_flights`, `delay_rate` (la tasa sin ajustar),
-       `expected_delayed_flights`, `observed_to_expected_ratio`, `crude_rank`
-       y `adjusted_rank`. Incluya solamente aerolíneas con al menos 100 000
-       vuelos operados. `crude_rank` es la posición según `delay_rate` y
-       `adjusted_rank` la posición según `observed_to_expected_ratio`; en
-       ambos, 1 es la peor aerolínea. Ordene la tabla por `adjusted_rank`.
-
-    Compare los dos rankings: las aerolíneas que cambian de posición son las
-    que el ranking sin ajustar juzga mal por sus horarios.
-
-    La función también debe retornar las dos tablas, en el mismo orden.
-
-    Ejemplo del formato de `carrier_adjusted_delays.csv`:
-
-        reporting_airline,operated_flights,...,crude_rank,adjusted_rank
-        EV,819223,...,1,1
-        ...
+    Guarda los resultados en submission y retorna
+    los dos DataFrames.
     """
 
-    raise NotImplementedError
+    # Manu: Definir las rutas del laboratorio
+    ruta_laboratorio = Path(__file__).resolve().parents[1]
+
+    ruta_datos = (
+        ruta_laboratorio
+        / "data"
+        / "flights_by_carrier_day_hour.csv.gz"
+    )
+
+    ruta_entregables = ruta_laboratorio / "submission"
+
+    # Manu: Crear la carpeta para los resultados
+    ruta_entregables.mkdir(parents=True, exist_ok=True)
+
+    # Manu: Leer directamente el archivo comprimido
+    tabla = pd.read_csv(ruta_datos, compression="gzip")
+
+    # ========================================================
+    # 1. TASAS NACIONALES DE DEMORA POR HORA
+    # ========================================================
+
+    # Manu: Agrupar los vuelos según la hora de salida
+    resumen_horario = (
+        tabla.groupby("scheduled_departure_hour")[
+            ["operated_flights", "delayed_departure_15_flights"]
+        ]
+        .sum()
+        .reset_index()
+    )
+
+    # Manu: Calcular la tasa nacional de demora por hora
+    resumen_horario["delay_rate"] = (
+        resumen_horario["delayed_departure_15_flights"]
+        / resumen_horario["operated_flights"]
+    )
+
+    # Manu: Organizar las horas de menor a mayor
+    resumen_horario = (
+        resumen_horario
+        .sort_values("scheduled_departure_hour")
+        .reset_index(drop=True)
+    )
+
+    # ========================================================
+    # 2. CÁLCULO DE DEMORAS ESPERADAS
+    # ========================================================
+
+    # Manu: Relacionar cada hora con su tasa nacional
+    tasas_por_hora = (
+        resumen_horario
+        .set_index("scheduled_departure_hour")["delay_rate"]
+        .to_dict()
+    )
+
+    # Manu: Asignar la tasa nacional a cada registro
+    tabla["tasa_horaria_nacional"] = (
+        tabla["scheduled_departure_hour"].map(tasas_por_hora)
+    )
+
+    # Manu: Calcular las demoras esperadas según el horario
+    tabla["demoras_esperadas"] = (
+        tabla["operated_flights"]
+        * tabla["tasa_horaria_nacional"]
+    )
+
+    # ========================================================
+    # 3. RESUMEN DE DEMORAS POR AEROLÍNEA
+    # ========================================================
+
+    # Manu: Agrupar los vuelos por aerolínea
+    resumen_aerolineas = (
+        tabla.groupby("reporting_airline")
+        .agg({
+            "operated_flights": "sum",
+            "delayed_departure_15_flights": "sum",
+            "demoras_esperadas": "sum",
+        })
+        .reset_index()
+    )
+
+    # Manu: Seleccionar aerolíneas con al menos 100000 vuelos
+    resumen_aerolineas = resumen_aerolineas.loc[
+        resumen_aerolineas["operated_flights"] >= 100000
+    ].copy()
+
+    # Manu: Asignar el nombre solicitado a las demoras esperadas
+    resumen_aerolineas = resumen_aerolineas.rename(
+        columns={
+            "demoras_esperadas": "expected_delayed_flights"
+        }
+    )
+
+    # ========================================================
+    # 4. INDICADORES DE PUNTUALIDAD
+    # ========================================================
+
+    # Manu: Calcular la tasa de demora sin ajustar
+    resumen_aerolineas["delay_rate"] = (
+        resumen_aerolineas["delayed_departure_15_flights"]
+        / resumen_aerolineas["operated_flights"]
+    )
+
+    # Manu: Comparar las demoras observadas con las esperadas
+    resumen_aerolineas["observed_to_expected_ratio"] = (
+        resumen_aerolineas["delayed_departure_15_flights"]
+        / resumen_aerolineas["expected_delayed_flights"]
+    )
+
+    # ========================================================
+    # 5. CONSTRUCCIÓN DE LOS RANKINGS
+    # ========================================================
+
+    # Manu: Ordenar de peor a mejor según la tasa sin ajustar
+    resumen_aerolineas["crude_rank"] = (
+        resumen_aerolineas["delay_rate"]
+        .rank(ascending=False, method="min")
+        .astype(int)
+    )
+
+    # Manu: Ordenar según la razón observada sobre esperada
+    resumen_aerolineas["adjusted_rank"] = (
+        resumen_aerolineas["observed_to_expected_ratio"]
+        .rank(ascending=False, method="min")
+        .astype(int)
+    )
+
+    # Manu: Ordenar la tabla según el ranking ajustado
+    resumen_aerolineas = (
+        resumen_aerolineas
+        .sort_values("adjusted_rank")
+        .reset_index(drop=True)
+    )
+
+    # ========================================================
+    # 6. ORGANIZACIÓN DE LAS TABLAS FINALES
+    # ========================================================
+
+    # Manu: Definir las columnas del resumen por hora
+    columnas_horarias = [
+        "scheduled_departure_hour",
+        "operated_flights",
+        "delayed_departure_15_flights",
+        "delay_rate",
+    ]
+
+    # Manu: Definir las columnas del ranking de aerolíneas
+    columnas_aerolineas = [
+        "reporting_airline",
+        "operated_flights",
+        "delayed_departure_15_flights",
+        "delay_rate",
+        "expected_delayed_flights",
+        "observed_to_expected_ratio",
+        "crude_rank",
+        "adjusted_rank",
+    ]
+
+    # Manu: Conservar solamente las columnas solicitadas
+    resumen_horario = resumen_horario[columnas_horarias]
+    resumen_aerolineas = resumen_aerolineas[columnas_aerolineas]
+
+    # ========================================================
+    # 7. GENERACIÓN DE LOS ENTREGABLES
+    # ========================================================
+
+    # Manu: Guardar las tasas de demora por hora
+    resumen_horario.to_csv(
+        ruta_entregables / "hourly_delay_rates.csv",
+        index=False,
+        encoding="utf-8"
+    )
+
+    # Manu: Guardar el ranking ajustado de aerolíneas
+    resumen_aerolineas.to_csv(
+        ruta_entregables / "carrier_adjusted_delays.csv",
+        index=False,
+        encoding="utf-8"
+    )
+
+    # Manu: Retornar las tablas en el orden solicitado
+    return resumen_horario, resumen_aerolineas
