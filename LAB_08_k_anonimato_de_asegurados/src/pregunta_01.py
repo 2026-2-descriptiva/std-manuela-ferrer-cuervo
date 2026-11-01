@@ -1,83 +1,288 @@
+
+# ============================================================
+# LAB 08 - K-ANONIMATO DE ASEGURADOS
+# Manu | Pregunta 01: Evaluación de privacidad de datos
+# ============================================================
+
+import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+
 def pregunta_01():
     """
-    Una aseguradora quiere publicar datos de sus afiliados para que un grupo
-    de investigación estudie el costo de los seguros, sin que nadie pueda
-    reconocer a una persona. El archivo `data/insurance.csv.gz` tiene una fila
-    por afiliado con su edad (`age`), sexo (`sex`), índice de masa corporal
-    (`bmi`), número de hijos (`children`), si fuma (`smoker`), región
-    (`region`) y el costo de su seguro (`charges`).
+    Evalúa el riesgo de reidentificación de los asegurados
+    mediante k-anonimato y diversidad del atributo sensible.
 
-    El archivo no tiene nombres ni documentos, pero eso no basta: la edad, el
-    sexo, el índice de masa corporal, el número de hijos y la región son
-    cuasi-identificadores, porque combinados pueden señalar a una persona.
-    `smoker` es el atributo sensible que se quiere proteger.
-
-    En este laboratorio usted va a medir el riesgo de reidentificación y a
-    decidir qué publicar. Use estas definiciones:
-
-    - Una clase de equivalencia es un grupo de registros con los mismos
-      valores en todos los cuasi-identificadores. Un conjunto de datos cumple
-      k-anonimato si toda clase tiene al menos k registros. Use k = 5.
-    - `age_group`: `18-29`, `30-39`, `40-49` o `50-64`.
-    - `bmi_group`: `bajo peso` (menos de 18.5), `normal` (desde 18.5 y menos
-      de 25), `sobrepeso` (desde 25 y menos de 30) u `obesidad` (30 o más).
-    - `children_group`: `0`, `1-2` o `3+`.
-
-    Evalúe dos esquemas de generalización:
-
-    - `with_children`: `age_group`, `sex`, `bmi_group`, `children_group` y
-      `region`.
-    - `without_children`: `age_group`, `sex`, `bmi_group` y `region`; el
-      número de hijos no se publica.
-
-    En cada esquema, suprima (no publique) los registros de las clases con
-    menos de 5 registros. Luego, entre las clases publicadas, identifique las
-    que no tienen diversidad en el atributo sensible, es decir, aquellas en
-    las que todos los afiliados fuman o ninguno fuma: en esas clases, saber
-    que alguien pertenece a ellas revela si fuma.
-
-    Escriba `submission/privacy_report.json` con estas claves:
-
-    - `original_k`: el menor tamaño de clase usando los cuasi-identificadores
-      originales, sin generalizar.
-    - `original_unique_records`: cuántos registros son los únicos de su clase
-      con los cuasi-identificadores originales.
-    - `schemes`: un diccionario con una entrada por esquema (`with_children` y
-      `without_children`), cada una con las claves `quasi_identifiers` (la
-      lista de columnas del esquema), `equivalence_classes` (clases antes de
-      suprimir), `k_before_suppression`, `suppressed_records`,
-      `published_records`, `published_classes`,
-      `classes_without_smoker_diversity` y
-      `records_without_smoker_diversity`.
-    - `selected_scheme`: el esquema que suprime menos registros.
-    - `mean_charges_original` y `mean_charges_published`: el costo promedio
-      de todos los afiliados y el de los registros publicados con el esquema
-      seleccionado.
-    - `smoker_rate_original` y `smoker_rate_published`: la proporción de
-      fumadores en ambos casos.
-
-    Escriba también `submission/insurance_published.csv`, sin el índice de
-    Pandas, con los registros publicados del esquema seleccionado, en el
-    mismo orden del archivo original, y las columnas del esquema seguidas de
-    `smoker` y `charges`.
-
-    La función también debe retornar el reporte como un diccionario.
-
-    Ejemplo del formato del reporte:
-
-        {
-          "original_k": 1,
-          "original_unique_records": 1330,
-          "schemes": {
-            "with_children": {
-              "quasi_identifiers": ["age_group", "sex", ...],
-              "equivalence_classes": 278,
-              ...
-            },
-            ...
-          },
-          ...
-        }
+    Compara dos esquemas de generalización, selecciona el
+    que suprime menos registros y genera los entregables.
     """
 
-    raise NotImplementedError
+    # Manu: Definir las rutas del laboratorio
+    ruta_laboratorio = Path(__file__).resolve().parents[1]
+    ruta_datos = ruta_laboratorio / "data" / "insurance.csv.gz"
+    ruta_entregables = ruta_laboratorio / "submission"
+
+    # Manu: Crear la carpeta de entrega
+    ruta_entregables.mkdir(parents=True, exist_ok=True)
+
+    # Manu: Leer directamente el archivo comprimido
+    tabla = pd.read_csv(ruta_datos, compression="gzip")
+
+    # ========================================================
+    # 1. EVALUACIÓN DE LOS DATOS ORIGINALES
+    # ========================================================
+
+    # Manu: Identificar los cuasi-identificadores originales
+    identificadores_originales = [
+        "age",
+        "sex",
+        "bmi",
+        "children",
+        "region",
+    ]
+
+    # Manu: Calcular el tamaño de cada clase de equivalencia
+    tamanos_originales = tabla.groupby(
+        identificadores_originales
+    )["age"].transform("size")
+
+    # Manu: Calcular el anonimato y los registros únicos
+    anonimato_original = int(tamanos_originales.min())
+
+    registros_unicos = int(
+        (tamanos_originales == 1).sum()
+    )
+
+    # ========================================================
+    # 2. GENERALIZACIÓN DE LOS DATOS
+    # ========================================================
+
+    # Manu: Agrupar las edades en intervalos
+    limites_edad = [18, 30, 40, 50, 65]
+    grupos_edad = ["18-29", "30-39", "40-49", "50-64"]
+
+    tabla["age_group"] = pd.cut(
+        tabla["age"],
+        bins=limites_edad,
+        labels=grupos_edad,
+        right=False
+    ).astype(str)
+
+    # Manu: Clasificar el índice de masa corporal
+    limites_imc = [-np.inf, 18.5, 25, 30, np.inf]
+
+    grupos_imc = [
+        "bajo peso",
+        "normal",
+        "sobrepeso",
+        "obesidad",
+    ]
+
+    tabla["bmi_group"] = pd.cut(
+        tabla["bmi"],
+        bins=limites_imc,
+        labels=grupos_imc,
+        right=False
+    ).astype(str)
+
+    # Manu: Agrupar la cantidad de hijos
+    def clasificar_hijos(cantidad):
+        if cantidad == 0:
+            return "0"
+        elif cantidad in [1, 2]:
+            return "1-2"
+        else:
+            return "3+"
+
+    tabla["children_group"] = (
+        tabla["children"].apply(clasificar_hijos)
+    )
+
+    # ========================================================
+    # 3. DEFINICIÓN DE LOS ESQUEMAS
+    # ========================================================
+
+    # Manu: Comparar la publicación con y sin número de hijos
+    esquemas = {
+        "with_children": [
+            "age_group",
+            "sex",
+            "bmi_group",
+            "children_group",
+            "region",
+        ],
+        "without_children": [
+            "age_group",
+            "sex",
+            "bmi_group",
+            "region",
+        ],
+    }
+
+    # Manu: Almacenar los resultados de cada alternativa
+    resultados_esquemas = {}
+    tablas_publicables = {}
+
+    # Manu: Definir el mínimo de registros por clase
+    k_minimo = 5
+
+    # ========================================================
+    # 4. EVALUACIÓN DE CADA ESQUEMA
+    # ========================================================
+
+    for nombre_esquema, identificadores in esquemas.items():
+
+        # Manu: Calcular las clases de equivalencia
+        grupos = tabla.groupby(
+            identificadores,
+            observed=True
+        )
+
+        tamanos_clases = grupos["age"].transform("size")
+
+        total_clases = int(grupos.ngroups)
+        k_antes = int(tamanos_clases.min())
+
+        # Manu: Identificar los registros que pueden publicarse
+        mascara_publicacion = tamanos_clases >= k_minimo
+
+        registros_suprimidos = int(
+            (~mascara_publicacion).sum()
+        )
+
+        registros_publicados = int(
+            mascara_publicacion.sum()
+        )
+
+        # Manu: Conservar solamente las clases con mínimo 5 registros
+        tabla_publicada = tabla.loc[mascara_publicacion].copy()
+
+        tablas_publicables[nombre_esquema] = tabla_publicada
+
+        # Manu: Agrupar los registros que sí pueden publicarse
+        grupos_publicados = tabla_publicada.groupby(
+            identificadores,
+            observed=True
+        )
+
+        clases_publicadas = int(grupos_publicados.ngroups)
+
+        # Manu: Identificar clases sin diversidad de fumadores
+        diversidad_fumadores = (
+            grupos_publicados["smoker"].nunique()
+        )
+
+        clases_sin_diversidad = int(
+            (diversidad_fumadores == 1).sum()
+        )
+
+        # Manu: Contar los registros pertenecientes a esas clases
+        tamanos_publicados = grupos_publicados.size()
+
+        registros_sin_diversidad = int(
+            tamanos_publicados[
+                diversidad_fumadores == 1
+            ].sum()
+        )
+
+        # Manu: Consolidar las estadísticas del esquema
+        resultados_esquemas[nombre_esquema] = {
+            "quasi_identifiers": identificadores,
+            "equivalence_classes": total_clases,
+            "k_before_suppression": k_antes,
+            "suppressed_records": registros_suprimidos,
+            "published_records": registros_publicados,
+            "published_classes": clases_publicadas,
+            "classes_without_smoker_diversity": clases_sin_diversidad,
+            "records_without_smoker_diversity": registros_sin_diversidad,
+        }
+
+    # ========================================================
+    # 5. SELECCIÓN DEL ESQUEMA DE PUBLICACIÓN
+    # ========================================================
+
+    # Manu: Elegir el esquema que suprime menos registros
+    esquema_seleccionado = min(
+        resultados_esquemas,
+        key=lambda nombre: resultados_esquemas[nombre][
+            "suppressed_records"
+        ]
+    )
+
+    # Manu: Recuperar los registros que se pueden publicar
+    datos_publicados = tablas_publicables[esquema_seleccionado]
+
+    # ========================================================
+    # 6. COMPARACIÓN DE INDICADORES
+    # ========================================================
+
+    # Manu: Calcular el costo promedio de los seguros
+    promedio_original = float(tabla["charges"].mean())
+
+    promedio_publicado = float(
+        datos_publicados["charges"].mean()
+    )
+
+    # Manu: Calcular la proporción de fumadores
+    proporcion_original = float(
+        tabla["smoker"].eq("yes").mean()
+    )
+
+    proporcion_publicada = float(
+        datos_publicados["smoker"].eq("yes").mean()
+    )
+
+    # ========================================================
+    # 7. CONSTRUCCIÓN DEL REPORTE DE PRIVACIDAD
+    # ========================================================
+
+    # Manu: Organizar los indicadores del análisis
+    reporte_privacidad = {
+        "original_k": anonimato_original,
+        "original_unique_records": registros_unicos,
+        "schemes": resultados_esquemas,
+        "selected_scheme": esquema_seleccionado,
+        "mean_charges_original": promedio_original,
+        "mean_charges_published": promedio_publicado,
+        "smoker_rate_original": proporcion_original,
+        "smoker_rate_published": proporcion_publicada,
+    }
+
+    # Manu: Guardar el reporte en formato JSON
+    ruta_reporte = ruta_entregables / "privacy_report.json"
+
+    with open(ruta_reporte, "w", encoding="utf-8") as archivo:
+        json.dump(
+            reporte_privacidad,
+            archivo,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    # ========================================================
+    # 8. GENERACIÓN DEL DATASET PUBLICABLE
+    # ========================================================
+
+    # Manu: Seleccionar únicamente las columnas autorizadas
+    columnas_publicacion = (
+        esquemas[esquema_seleccionado]
+        + ["smoker", "charges"]
+    )
+
+    # Manu: Conservar el orden original de los registros
+    dataset_publicable = datos_publicados[columnas_publicacion]
+
+    # Manu: Exportar los registros sin el índice de Pandas
+    ruta_csv = ruta_entregables / "insurance_published.csv"
+
+    dataset_publicable.to_csv(
+        ruta_csv,
+        index=False,
+        encoding="utf-8"
+    )
+
+    # Manu: Retornar el reporte como diccionario
+    return reporte_privacidad
