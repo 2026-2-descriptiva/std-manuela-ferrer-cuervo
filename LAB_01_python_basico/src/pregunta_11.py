@@ -1,13 +1,44 @@
+
+# ============================================================
+# LAB 01 - PYTHON BÁSICO
+# Manu | Pregunta 11: Suma de valores por código
+# ============================================================
+
+import gzip
+from pathlib import Path
+from collections import defaultdict
+
+
 def pregunta_11():
     """
-    La cuarta columna (`codes`) contiene letras minúsculas separadas por
-    comas. Para cada una de esas letras, sume los valores de la segunda
-    columna (`value`) de los registros en los que aparece. Retorne un
-    diccionario `{letra: suma}` con las letras en orden alfabético.
+    Calcula la suma de los valores de cada registro según
+    los códigos presentes en la cuarta columna.
 
-    Ejemplo del formato de la respuesta:
-
-        {"a": 122, "b": 49, "c": 91, ...}
+    Devuelve un diccionario con los códigos ordenados
+    alfabéticamente y sus respectivas sumas.
     """
 
-    raise NotImplementedError
+    # Manu: Ubicación del archivo comprimido
+    ruta_datos = Path(__file__).resolve().parents[1] / "data" / "data.csv.gz"
+
+    # Manu: Diccionario para acumular las sumas por código
+    suma_por_codigo = defaultdict(int)
+
+    # Manu: Lectura y procesamiento de los registros
+    with gzip.open(ruta_datos, "rt", encoding="utf-8") as archivo:
+        for linea in archivo:
+            if not linea.strip():
+                continue
+
+            columnas = linea.strip().split("\t")
+
+            valor = int(columnas[1])
+            codigos = set(columnas[3].split(","))
+
+            # Manu: Sumar el valor a cada código único del registro
+            for codigo in codigos:
+                suma_por_codigo[codigo] += valor
+
+    # Manu: Organizar las claves alfabéticamente
+    return dict(sorted(suma_por_codigo.items()))
+

@@ -1,14 +1,47 @@
+
+# ============================================================
+# LAB 01 - PYTHON BÁSICO
+# Manu | Pregunta 10: Conteo de códigos y métricas
+# ============================================================
+
+import gzip
+from pathlib import Path
+
+
 def pregunta_10():
     """
-    Para cada registro del archivo, en el mismo orden en que aparecen,
-    retorne una tupla con la letra de la primera columna (`letter`), la
-    cantidad de elementos de la cuarta columna (`codes`) y la cantidad de
-    pares de la quinta columna (`metrics`). El resultado es una lista con una
-    tupla por registro.
+    Identifica la letra y cuenta los códigos y métricas
+    asociados a cada registro del archivo.
 
-    Ejemplo del formato de la respuesta:
-
-        [("E", 3, 5), ("A", 3, 4), ("B", 4, 4), ...]
+    Devuelve una lista de tuplas (letra, cantidad de códigos,
+    cantidad de métricas), conservando el orden original.
     """
 
-    raise NotImplementedError
+    # Manu: Ubicación del archivo comprimido
+    ruta_datos = Path(__file__).resolve().parents[1] / "data" / "data.csv.gz"
+
+    # Manu: Lista para almacenar los resultados
+    resumen_registros = []
+
+    # Manu: Lectura y procesamiento de cada fila
+    with gzip.open(ruta_datos, "rt", encoding="utf-8") as archivo:
+        for linea in archivo:
+            if not linea.strip():
+                continue
+
+            columnas = linea.strip().split("\t")
+
+            letra = columnas[0]
+            codigos = columnas[3].split(",")
+            metricas = columnas[4].split(",")
+
+            cantidad_codigos = len(codigos)
+            cantidad_metricas = len(metricas)
+
+            resumen_registros.append(
+                (letra, cantidad_codigos, cantidad_metricas)
+            )
+
+    # Manu: Retornar las tuplas en el orden del archivo
+    return resumen_registros
+

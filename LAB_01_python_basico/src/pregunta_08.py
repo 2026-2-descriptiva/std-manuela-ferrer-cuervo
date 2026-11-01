@@ -1,12 +1,46 @@
+
+# ============================================================
+# LAB 01 - PYTHON BÁSICO
+# Manu | Pregunta 08: Letras únicas por valor
+# ============================================================
+
+import gzip
+from pathlib import Path
+from collections import defaultdict
+
+
 def pregunta_08():
     """
-    Repita la pregunta 7, pero ahora cada lista de letras debe contener cada
-    letra una sola vez y estar ordenada alfabéticamente. Retorne una lista de
-    tuplas `(valor, letras)` ordenada por el valor.
+    Agrupa las letras de la primera columna según los valores
+    de la segunda columna.
 
-    Ejemplo del formato de la respuesta:
-
-        [(0, ["C"]), (1, ["B", "E"]), (2, ["A", "E"]), ...]
+    Elimina las letras repetidas dentro de cada grupo y
+    devuelve las listas ordenadas alfabéticamente.
     """
 
-    raise NotImplementedError
+    # Manu: Ubicación del archivo comprimido
+    ruta_datos = Path(__file__).resolve().parents[1] / "data" / "data.csv.gz"
+
+    # Manu: Agrupar letras únicas para cada valor
+    letras_por_valor = defaultdict(set)
+
+    # Manu: Lectura y clasificación de los registros
+    with gzip.open(ruta_datos, "rt", encoding="utf-8") as archivo:
+        for linea in archivo:
+            if not linea.strip():
+                continue
+
+            columnas = linea.strip().split("\t")
+            letra = columnas[0]
+            valor = int(columnas[1])
+
+            letras_por_valor[valor].add(letra)
+
+    # Manu: Ordenar tanto los valores como las letras
+    resultados = []
+
+    for valor, letras in sorted(letras_por_valor.items()):
+        resultados.append((valor, sorted(letras)))
+
+    return resultados
+

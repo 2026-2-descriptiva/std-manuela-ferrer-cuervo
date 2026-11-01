@@ -1,12 +1,35 @@
+
+# ============================================================
+# LAB 01 - PYTHON BÁSICO
+# Manu | Pregunta 02: Conteo de registros por letra
+# ============================================================
+
+import gzip
+from pathlib import Path
+from collections import Counter
+
+
 def pregunta_02():
     """
-    Cuente cuántos registros hay para cada letra de la primera columna
-    (`letter`). Retorne una lista de tuplas `(letra, cantidad)` ordenada
-    alfabéticamente por la letra.
-
-    Ejemplo del formato de la respuesta:
-
-        [("A", 8), ("B", 7), ("C", 5), ...]
+    Cuenta los registros correspondientes a cada letra
+    de la primera columna y devuelve una lista de tuplas
+    ordenada alfabéticamente.
     """
 
-    raise NotImplementedError
+    # Manu: Ruta del archivo comprimido
+    ruta_datos = Path(__file__).resolve().parents[1] / "data" / "data.csv.gz"
+
+    # Manu: Inicialización del contador
+    conteo_letras = Counter()
+
+    # Manu: Lectura y conteo de los registros
+    with gzip.open(ruta_datos, "rt", encoding="utf-8") as archivo:
+        for linea in archivo:
+            columnas = linea.strip().split("\t")
+
+            if columnas[0]:
+                conteo_letras[columnas[0]] += 1
+
+    # Manu: Ordenar alfabéticamente y devolver las tuplas
+    return sorted(conteo_letras.items())
+
