@@ -26,3 +26,14 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 03: Primeros cinco registros por fecha
+-- ============================================================
+
+SELECT
+    *
+FROM tbl1
+ORDER BY c14 ASC
+LIMIT 5;
+

@@ -25,3 +25,15 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 12: Valores máximos y mínimos por letra
+-- ============================================================
+
+SELECT
+    K0,
+    MAX(c12),
+    MIN(c12)
+FROM tbl1
+GROUP BY K0
+ORDER BY K0 ASC;

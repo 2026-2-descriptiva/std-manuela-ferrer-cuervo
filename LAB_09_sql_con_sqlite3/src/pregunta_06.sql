@@ -27,3 +27,13 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 06: Registros de categoría A por fecha
+-- ============================================================
+
+SELECT
+    *
+FROM tbl1
+WHERE K0 = 'A'
+ORDER BY c14 ASC;

@@ -25,3 +25,14 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 08: Promedio de c21 por año
+-- ============================================================
+
+SELECT
+    STRFTIME('%Y', c23) AS YEAR,
+    AVG(c21)
+FROM tbl2
+GROUP BY STRFTIME('%Y', c23)
+ORDER BY YEAR ASC;

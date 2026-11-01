@@ -26,3 +26,15 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 13: Promedio por categoría con condición
+-- ============================================================
+
+SELECT
+    K0,
+    AVG(c12)
+FROM tbl1
+WHERE c13 > 400
+GROUP BY K0
+ORDER BY K0 ASC;

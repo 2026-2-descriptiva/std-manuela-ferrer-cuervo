@@ -24,3 +24,12 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 05: Filtrar registros por valores de c02
+-- ============================================================
+
+SELECT
+    *
+FROM tbl0
+WHERE c02 IN (100, 600);

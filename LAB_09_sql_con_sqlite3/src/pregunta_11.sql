@@ -22,3 +22,14 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 11: Cantidad de registros del año 2018
+-- ============================================================
+
+SELECT
+    STRFTIME('%Y', c14) AS YEAR,
+    COUNT(*) AS CANT
+FROM tbl1
+WHERE STRFTIME('%Y', c14) = '2018'
+GROUP BY STRFTIME('%Y', c14);

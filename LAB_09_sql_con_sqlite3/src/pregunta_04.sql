@@ -24,3 +24,14 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 04: Coincidencia de letras iniciales
+-- ============================================================
+
+SELECT
+    K0,
+    c16
+FROM tbl1
+WHERE SUBSTR(c16, 1, 1) = K0;
+

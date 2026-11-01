@@ -21,3 +21,11 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 01: Suma de valores de la columna c12
+-- ============================================================
+
+SELECT
+    SUM(c12)
+FROM tbl1;

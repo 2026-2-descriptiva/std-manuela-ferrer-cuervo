@@ -21,3 +21,11 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 02: Cantidad de registros de tbl1
+-- ============================================================
+
+SELECT
+    COUNT(*)
+FROM tbl1;

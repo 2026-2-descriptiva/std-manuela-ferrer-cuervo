@@ -21,3 +21,13 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 09: Registro con el menor valor de c21
+-- ============================================================
+
+SELECT
+    *
+FROM tbl2
+ORDER BY c21 ASC
+LIMIT 1;

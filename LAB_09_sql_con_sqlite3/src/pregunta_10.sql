@@ -25,3 +25,12 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+
+-- ============================================================
+-- Manu | Pregunta 10: Registros con c02 mayor o igual a 300
+-- ============================================================
+
+SELECT
+    *
+FROM tbl0
+WHERE c02 >= 300;
