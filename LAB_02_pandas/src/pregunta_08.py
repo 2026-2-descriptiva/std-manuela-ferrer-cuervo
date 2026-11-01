@@ -1,15 +1,33 @@
+
+# ============================================================
+# LAB 02 - PANDAS
+# Manu | Pregunta 08: Creación de columna calculada
+# ============================================================
+
+import pandas as pd
+from pathlib import Path
+
+
 def pregunta_08():
     """
-    Retorne la tabla `data/tbl0.tsv` completa con una columna adicional
-    llamada `suma`, al final, cuyo valor en cada fila es `c0 + c2`.
+    Agrega una nueva columna llamada suma a la tabla tbl0.tsv,
+    calculando la suma de c0 y c2 para cada registro.
 
-    Ejemplo del formato de la respuesta:
-
-            c0 c1  c2          c3  suma
-        0    0  E   1  1999-02-28     1
-        1    1  A   2  1999-10-28     3
-        2    2  B   5  1998-05-02     7
-        ...
+    Retorna el DataFrame completo con la nueva columna
+    ubicada al final.
     """
 
-    raise NotImplementedError
+    # Manu: Ubicación del archivo de datos
+    ruta_datos = Path(__file__).resolve().parents[1] / "data" / "tbl0.tsv"
+
+    # Manu: Lectura de la tabla original con Pandas
+    tabla = pd.read_csv(ruta_datos, sep="\t")
+
+    # Manu: Calcular la suma de las columnas c0 y c2
+    valores_sumados = tabla["c0"].add(tabla["c2"])
+
+    # Manu: Incorporar la columna calculada al final
+    tabla = tabla.assign(suma=valores_sumados)
+
+    return tabla
+

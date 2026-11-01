@@ -1,18 +1,42 @@
+
+# ============================================================
+# LAB 02 - PANDAS
+# Manu | Pregunta 10: Agrupación de valores en texto
+# ============================================================
+
+import pandas as pd
+from pathlib import Path
+
+
 def pregunta_10():
     """
-    Usando `data/tbl0.tsv`, construya para cada categoría de la columna `c1`
-    un texto con todos sus valores de la columna `c2`, ordenados de menor a
-    mayor y separados por `:`. Retorne un DataFrame cuyo índice son las
-    categorías, en orden alfabético, con una única columna llamada `c2`.
+    Agrupa los valores de la columna c2 según cada categoría
+    de c1, ordenándolos de menor a mayor.
 
-    Ejemplo del formato de la respuesta:
-
-                           c2
-        c1
-        A     1:1:2:3:6:7:8:9
-        B       1:3:4:5:6:8:9
-        C           0:5:6:7:9
-        ...
+    Une los valores mediante dos puntos y retorna un
+    DataFrame con las categorías como índice.
     """
 
-    raise NotImplementedError
+    # Manu: Ubicación del archivo de datos
+    ruta_datos = Path(__file__).resolve().parents[1] / "data" / "tbl0.tsv"
+
+    # Manu: Lectura de la tabla con Pandas
+    tabla = pd.read_csv(ruta_datos, sep="\t")
+
+    # Manu: Agrupar los valores según su categoría
+    grupos_categorias = tabla.groupby("c1")["c2"]
+
+    # Manu: Ordenar los valores y unirlos en un texto
+    def unir_valores(valores):
+        valores_ordenados = sorted(valores)
+        valores_texto = [str(valor) for valor in valores_ordenados]
+        return ":".join(valores_texto)
+
+    # Manu: Aplicar la transformación a cada categoría
+    resumen_categorias = grupos_categorias.apply(unir_valores)
+
+    # Manu: Convertir la Serie en un DataFrame
+    resultado = resumen_categorias.to_frame(name="c2")
+
+    return resultado.sort_index()
+

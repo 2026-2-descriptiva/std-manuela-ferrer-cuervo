@@ -1,16 +1,36 @@
+
+# ============================================================
+# LAB 02 - PANDAS
+# Manu | Pregunta 04: Promedio de valores por categoría
+# ============================================================
+
+import pandas as pd
+from pathlib import Path
+
+
 def pregunta_04():
     """
-    Usando `data/tbl0.tsv`, calcule el promedio de la columna `c2` para cada
-    categoría de la columna `c1`. Retorne una Serie de Pandas cuyo índice son
-    las categorías, en orden alfabético, y cuyos valores son los promedios.
+    Calcula el promedio de los valores de la columna c2
+    para cada categoría presente en la columna c1.
 
-    Ejemplo del formato de la respuesta:
-
-        c1
-        A    4.6250
-        B    5.1429
-        C    5.4000
-        ...
+    Retorna una Serie de Pandas con las categorías
+    ordenadas alfabéticamente.
     """
 
-    raise NotImplementedError
+    # Manu: Ubicación del archivo de datos
+    ruta_datos = Path(__file__).resolve().parents[1] / "data" / "tbl0.tsv"
+
+    # Manu: Lectura de la tabla con Pandas
+    tabla = pd.read_csv(ruta_datos, sep="\t")
+
+    # Manu: Agrupar los registros por categoría
+    grupos = tabla.groupby("c1")
+
+    # Manu: Calcular el promedio de los valores de c2
+    promedio_categorias = grupos["c2"].mean()
+
+    # Manu: Ordenar alfabéticamente las categorías
+    resultado = promedio_categorias.sort_index()
+
+    return resultado
+
